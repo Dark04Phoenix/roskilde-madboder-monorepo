@@ -17,9 +17,12 @@ namespace GroenKildeApi.Controllers
         }
 
         [HttpGet]
+        [Produces("application/json")]
         public async Task<ActionResult<IEnumerable<FoodBooth>>> GetFoodBooths()
         {
-            return await _context.FoodBooths.ToListAsync();
+            var booths = await _context.FoodBooths.ToListAsync();
+            return Ok(booths);
         }
+
     }
 }
