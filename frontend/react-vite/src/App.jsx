@@ -149,7 +149,8 @@ export default function App() {
       <MapContainer
         center={[55.6173, 12.0784]}
         zoom={15}
-        style={{ height: "70vh" }}
+        style={{ height: "calc(100vh - 56px)" }}   // 56px ≈ højden på topbaren
+
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
@@ -197,11 +198,13 @@ export default function App() {
       {/* Dashboard */}
       {role === "organizer" && <Dashboard totals={totals} />}
 
-      {/* Geolocation test section */}
+            {/* Geolocation test section */}
+      {/*
       <section>
         <h1>useGeolocation</h1>
         <Location />
       </section>
+      */}
     </div>
   );
 }
