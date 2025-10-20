@@ -11,7 +11,8 @@ export default function Topbar({
 }) {
   return (
     <header className="topbar">
-      <strong>Cirkulær Madbod – React</strong>
+      <strong>Cirkulære Madboder – Roskilde Festival
+</strong>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <label>Rolle:</label>
         <select value={role} onChange={(e) => setRole(e.target.value)}>

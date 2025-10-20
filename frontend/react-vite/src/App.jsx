@@ -150,8 +150,9 @@ export default function App() {
         center={[55.6173, 12.0784]}
         zoom={15}
         style={{ height: "calc(100vh - 56px)" }}   // 56px ≈ højden på topbaren
-
+        scrollWheelZoom={false}
       >
+        
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
         {/* Boder med blå ikoner */}
