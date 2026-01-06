@@ -8,11 +8,11 @@ export default function Topbar({
   lastReport,
   removeLastReport,
   exportReports,
+  clearAllReports, // ⬅️ NYT
 }) {
   return (
     <header className="topbar">
-      <strong>Cirkulære Madboder – Roskilde Festival
-</strong>
+      <strong>Cirkulære Madboder – Roskilde Festival</strong>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <label>Rolle:</label>
         <select value={role} onChange={(e) => setRole(e.target.value)}>
@@ -27,10 +27,15 @@ export default function Topbar({
           </button>
         )}
         {role !== "organizer" && (
-          <button onClick={() => setArmingReport(true)}>Markér skrald</button>
+          <button onClick={() => setArmingReport(true)}>
+            Markér skrald
+          </button>
         )}
         {lastReport && (
           <button onClick={removeLastReport}>Fortryd markering</button>
+        )}
+        {(role === "volunteer" || role === "organizer") && (
+          <button onClick={clearAllReports}>Ryd alle markeringer</button>
         )}
         {role === "organizer" && (
           <button onClick={exportReports}>Eksportér rapporter</button>

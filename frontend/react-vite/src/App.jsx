@@ -26,7 +26,7 @@ const stallIcon = new L.Icon({
   iconAnchor: [16, 32],
 });
 
-// ---- Hook: husk værdi i localStorage ----
+// ---- Hook: værdi i localStorage ----
 function usePersistedState(key, defaultValue) {
   const [value, setValue] = useState(() => {
     const saved = localStorage.getItem(key);
@@ -96,6 +96,13 @@ export default function App() {
     setActiveStall((prev) =>
       prev ? { ...prev, likes: prev.likes + 1, _liked: true } : prev
     );
+
+    function clearAllReports() {
+  if (window.confirm("Er du sikker på, at du vil rydde alle markeringer?")) {
+    localStorage.removeItem("reports"); // ryd fra localStorage
+    setReports([]); // ryd fra state
+  }
+}
   }
 
   // Eksportér rapporter
@@ -150,7 +157,7 @@ export default function App() {
         center={[55.6173, 12.0784]}
         zoom={15}
         style={{ height: "calc(100vh - 56px)" }}   // 56px ≈ højden på topbaren
-        scrollWheelZoom={false}
+        scrollWheelZoom={true}
       >
         
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
