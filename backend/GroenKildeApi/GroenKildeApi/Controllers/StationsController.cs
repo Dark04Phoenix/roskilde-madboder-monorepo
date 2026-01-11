@@ -21,24 +21,57 @@ namespace GroenKildeApi.Controllers
                 ?? throw new InvalidOperationException("Connection string 'ReCircleDb' is missing.");
         }
 
+        // ✅ GET: api/stations (arrangør-overblik)
         [HttpGet]
         public async Task<IActionResult> GetStations()
         {
-            var stations = await GetStationsInternal(null);
-            return Ok(stations);
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_GetAllStationsWithStatus", conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            var result = new List<StationWithStatus>();
+            while (await reader.ReadAsync())
+            {
+                result.Add(MapStationWithStatus(reader));
+            }
+
+            return Ok(result);
         }
 
+        // ✅ GET: api/stations/{id} (enkelt station – fx QR-scan)
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetStationById(Guid id)
         {
-            var stations = await GetStationsInternal(id);
-            var station = stations.FirstOrDefault();
-            if (station == null) return NotFound();
-            return Ok(station);
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("sp_GetStationWithStatus", conn)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(new SqlParameter("@StationId", SqlDbType.UniqueIdentifier)
+            {
+                Value = id
+            });
+
+            await conn.OpenAsync();
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            if (!reader.HasRows || !await reader.ReadAsync())
+                return NotFound();
+
+            return Ok(MapStationWithStatus(reader));
         }
 
+        // ✅ PUT: api/stations/{id}/status (frivillig opdaterer status)
         [HttpPut("{id:guid}/status")]
-        public async Task<IActionResult> UpdateStationStatus(Guid id, [FromBody] UpdateStationStatusRequest request)
+        public async Task<IActionResult> UpdateStationStatus(
+            Guid id,
+            [FromBody] UpdateStationStatusRequest request)
         {
             if (request == null || string.IsNullOrWhiteSpace(request.StatusType) || request.UserId == Guid.Empty)
             {
@@ -58,44 +91,15 @@ namespace GroenKildeApi.Controllers
             await conn.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
 
-            StationStatus? newStatus = null;
-            if (reader.HasRows)
+            if (reader.HasRows && await reader.ReadAsync())
             {
-                if (await reader.ReadAsync())
-                {
-                    newStatus = MapStatus(reader);
-                }
+                return Ok(MapStatus(reader));
             }
-
-            if (newStatus != null) return Ok(newStatus);
 
             return NoContent();
         }
 
-        private async Task<List<StationWithStatus>> GetStationsInternal(Guid? stationId)
-        {
-            using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand("sp_GetStationWithStatus", conn)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(new SqlParameter("@StationId", SqlDbType.UniqueIdentifier)
-            {
-                Value = stationId.HasValue ? stationId.Value : DBNull.Value
-            });
-
-            await conn.OpenAsync();
-            using var reader = await cmd.ExecuteReaderAsync();
-
-            var result = new List<StationWithStatus>();
-            while (await reader.ReadAsync())
-            {
-                result.Add(MapStationWithStatus(reader));
-            }
-
-            return result;
-        }
+        // -------------------- MAPPERS --------------------
 
         private static StationWithStatus MapStationWithStatus(SqlDataReader reader)
         {
@@ -104,7 +108,6 @@ namespace GroenKildeApi.Controllers
                 StationId = GetValue<Guid>(reader, "StationId"),
                 Navn = GetValue<string>(reader, "Navn"),
                 GPSPosition = GetNullableString(reader, "GPSPosition"),
-                SenesteStatusId = GetNullableStruct<Guid>(reader, "SenesteStatusId"),
                 StatusId = GetNullableStruct<Guid>(reader, "StatusId"),
                 StatusType = GetNullableString(reader, "Type"),
                 StatusTidspunkt = GetNullableStruct<DateTime>(reader, "Tidspunkt"),
@@ -124,11 +127,13 @@ namespace GroenKildeApi.Controllers
             };
         }
 
+        // -------------------- HELPERS --------------------
+
         private static T GetValue<T>(SqlDataReader reader, string column)
         {
             var ordinal = SafeGetOrdinal(reader, column);
-            if (ordinal < 0) return default!;
-            return reader.IsDBNull(ordinal) ? default! : (T)reader.GetValue(ordinal);
+            if (ordinal < 0 || reader.IsDBNull(ordinal)) return default!;
+            return (T)reader.GetValue(ordinal);
         }
 
         private static T? GetNullableStruct<T>(SqlDataReader reader, string column) where T : struct
@@ -147,14 +152,8 @@ namespace GroenKildeApi.Controllers
 
         private static int SafeGetOrdinal(SqlDataReader reader, string column)
         {
-            try
-            {
-                return reader.GetOrdinal(column);
-            }
-            catch (IndexOutOfRangeException)
-            {
-                return -1;
-            }
+            try { return reader.GetOrdinal(column); }
+            catch { return -1; }
         }
     }
 }
