@@ -12,7 +12,7 @@ export default function Topbar({
 }) {
   return (
     <header className="topbar">
-      <strong>Cirkulære Madboder – Roskilde Festival</strong>
+      <strong>ReCirkle</strong>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <label>Rolle:</label>
         <select value={role} onChange={(e) => setRole(e.target.value)}>
