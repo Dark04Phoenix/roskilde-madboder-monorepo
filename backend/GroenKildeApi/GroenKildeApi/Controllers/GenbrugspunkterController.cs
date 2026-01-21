@@ -23,7 +23,7 @@ namespace GroenKildeApi.Controllers
         public async Task<IActionResult> GetGenbrugspunkter()
         {
             using var conn = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand("sp_GetGenbrugspunkt", conn)
+            using var cmd = new SqlCommand("sp_GetGenbrugspunkter", conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
