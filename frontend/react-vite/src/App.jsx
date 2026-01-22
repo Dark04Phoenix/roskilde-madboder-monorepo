@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  CircleMarker,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, CircleMarker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useGeolocation } from "@uidotdev/usehooks";
@@ -17,7 +12,7 @@ import ReportHandler from "./components/ReportHandler";
 import HeatmapLayer from "./components/HeatmapLayer";
 
 // Utils
-import { loadReports, removeReportById } from "./utils/storage";
+import { loadReports, removeReportById, saveReports } from "./utils/storage";
 
 // ---- Blå ikon til madboder ----
 const stallIcon = new L.Icon({
@@ -38,7 +33,7 @@ function usePersistedState(key, defaultValue) {
   return [value, setValue];
 }
 
-// --- Location component ---
+// --- Location component (not used in UI) ---
 function Location() {
   const state = useGeolocation();
   const [show, setShow] = useState(false);
@@ -74,6 +69,7 @@ export default function App() {
   const [heatOn, setHeatOn] = useState(false);
   const [armingReport, setArmingReport] = useState(false);
   const [lastReport, setLastReport] = useState(null);
+  const canMark = role === "volunteer";
 
   // Load stalls.json
   useEffect(() => {
@@ -86,6 +82,13 @@ export default function App() {
       .catch((err) => console.error("Kunne ikke indlæse stalls.json:", err));
   }, []);
 
+  // Stop markering hvis rollen ikke må markere
+  useEffect(() => {
+    if (!canMark && armingReport) {
+      setArmingReport(false);
+    }
+  }, [canMark, armingReport]);
+
   // Like funktion
   function handleLike(stallId) {
     setStalls((prev) =>
@@ -96,16 +99,17 @@ export default function App() {
     setActiveStall((prev) =>
       prev ? { ...prev, likes: prev.likes + 1, _liked: true } : prev
     );
-
-    function clearAllReports() {
-  if (window.confirm("Er du sikker på, at du vil rydde alle markeringer?")) {
-    localStorage.removeItem("reports"); // ryd fra localStorage
-    setReports([]); // ryd fra state
-  }
-}
   }
 
-  // Eksportér rapporter
+  function clearAllReports() {
+    if (window.confirm("Er du sikker på, at du vil rydde alle markeringer?")) {
+      saveReports([]);
+      setReports([]);
+      setLastReport(null);
+    }
+  }
+
+  // Eksporter rapporter (lokal fil)
   function exportReports() {
     const data = JSON.stringify(reports, null, 2);
     const blob = new Blob([data], { type: "application/json" });
@@ -150,16 +154,17 @@ export default function App() {
           }
         }}
         exportReports={exportReports}
+        clearAllReports={clearAllReports}
+        canMark={canMark}
       />
 
       {/* Kort */}
       <MapContainer
         center={[55.6173, 12.0784]}
         zoom={15}
-        style={{ height: "calc(100vh - 56px)" }}   // 56px ≈ højden på topbaren
+        style={{ height: "calc(100vh - 56px)" }} // 56px ≈ højden på topbaren
         scrollWheelZoom={true}
       >
-        
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
         {/* Boder med blå ikoner */}
@@ -190,6 +195,7 @@ export default function App() {
           setArmingReport={setArmingReport}
           addReport={(r) => setReports([...reports, r])}
           setLastReport={setLastReport}
+          canMark={canMark}
         />
 
         {/* Heatmap */}
@@ -206,7 +212,7 @@ export default function App() {
       {/* Dashboard */}
       {role === "organizer" && <Dashboard totals={totals} />}
 
-            {/* Geolocation test section */}
+      {/* Geolocation test section (hidden) */}
       {/*
       <section>
         <h1>useGeolocation</h1>

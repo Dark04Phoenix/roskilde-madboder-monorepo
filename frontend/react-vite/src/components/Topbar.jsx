@@ -8,7 +8,8 @@ export default function Topbar({
   lastReport,
   removeLastReport,
   exportReports,
-  clearAllReports, // ⬅️ NYT
+  clearAllReports,
+  canMark,
 }) {
   return (
     <header className="topbar">
@@ -26,17 +27,17 @@ export default function Topbar({
             Heatmap: {heatOn ? "On" : "Off"}
           </button>
         )}
-        {role !== "organizer" && (
-          <button onClick={() => setArmingReport(true)}>
-            Markér skrald
-          </button>
+
+        {canMark && (
+          <button onClick={() => setArmingReport(true)}>Markér skrald</button>
         )}
-        {lastReport && (
+
+        {lastReport && canMark && (
           <button onClick={removeLastReport}>Fortryd markering</button>
         )}
-        {(role === "volunteer" || role === "organizer") && (
-          <button onClick={clearAllReports}>Ryd alle markeringer</button>
-        )}
+
+        {canMark && <button onClick={clearAllReports}>Ryd alle markeringer</button>}
+
         {role === "organizer" && (
           <button onClick={exportReports}>Eksportér rapporter</button>
         )}
