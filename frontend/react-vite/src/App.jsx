@@ -14,6 +14,17 @@ import HeatmapLayer from "./components/HeatmapLayer";
 // Utils
 import { loadReports, removeReportById, saveReports } from "./utils/storage";
 
+// Kort-område: Roskilde Festival (afgrænset for at holde UX i scope)
+const FESTIVAL_CENTER = [55.6175, 12.0789]; // midt på festivalpladsen
+const FESTIVAL_BOUNDS = [
+  [55.6085, 12.065], // sydvest
+  [55.6255, 12.095], // nordøst
+];
+const FESTIVAL_ZOOM = 16; // tæt nok til at se pladsen fra start
+const MIN_ZOOM = 15; // undgå for langt ude overview
+const MAX_ZOOM = 18; // undgå for langt inde (unødvendige tiles)
+const BOUNDS_VISCOUS = 1.0; // låser pan blødt inde i festivalområdet
+
 // ---- Blå ikon til madboder ----
 const stallIcon = new L.Icon({
   iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
@@ -160,12 +171,17 @@ export default function App() {
 
       {/* Kort */}
       <MapContainer
-        center={[55.6173, 12.0784]}
-        zoom={15}
+        center={FESTIVAL_CENTER}
+        zoom={FESTIVAL_ZOOM}
+        minZoom={MIN_ZOOM}
+        maxZoom={MAX_ZOOM}
+        maxBounds={FESTIVAL_BOUNDS}
+        maxBoundsViscosity={BOUNDS_VISCOUS}
         style={{ height: "calc(100vh - 56px)" }} // 56px ≈ højden på topbaren
         scrollWheelZoom={true}
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
 
         {/* Boder med blå ikoner */}
         {stalls.map((s) => (
