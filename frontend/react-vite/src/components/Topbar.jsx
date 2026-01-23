@@ -34,10 +34,14 @@ export default function Topbar({
       });
       if (res.status === 401) {
         setError("Forkert email eller password.");
+        setUser(null);
+        setRole("guest");
         return;
       }
       if (!res.ok) {
         setError("Login fejlede. Prøv igen.");
+        setUser(null);
+        setRole("guest");
         return;
       }
       const data = await res.json();
@@ -46,6 +50,8 @@ export default function Topbar({
       setPassword("");
     } catch (err) {
       setError("Netværksfejl. Prøv igen.");
+      setUser(null);
+      setRole("guest");
     } finally {
       setLoading(false);
     }

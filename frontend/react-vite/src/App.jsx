@@ -74,6 +74,7 @@ function Location() {
 export default function App() {
   const [stalls, setStalls] = useState([]);
   const [role, setRole] = usePersistedState("gronkilde_role", "guest");
+  const [user, setUser] = usePersistedState("gronkilde_user", null);
   const [activeStall, setActiveStall] = useState(null);
 
   const [reports, setReports] = useState(loadReports());
@@ -81,6 +82,14 @@ export default function App() {
   const [armingReport, setArmingReport] = useState(false);
   const [lastReport, setLastReport] = useState(null);
   const canMark = role === "volunteer";
+
+  // Map backend-rolle til frontend-rolle (ensartet brug i app)
+  function mapBackendRole(r) {
+    const lower = (r || "").toLowerCase();
+    if (lower === "frivillig") return "volunteer";
+    if (lower === "arrangør" || lower === "arrangoer" || lower === "arrangor") return "organizer";
+    return "guest";
+  }
 
   // Load stalls.json
   useEffect(() => {
@@ -99,6 +108,15 @@ export default function App() {
       setArmingReport(false);
     }
   }, [canMark, armingReport]);
+
+  // Hold role og user i sync: ingen user => gæst; user bestemmer rollen
+  useEffect(() => {
+    if (user) {
+      setRole(mapBackendRole(user.rolle));
+    } else if (role !== "guest") {
+      setRole("guest");
+    }
+  }, [user]);
 
   // Like funktion
   function handleLike(stallId) {
@@ -152,6 +170,8 @@ export default function App() {
       <Topbar
         role={role}
         setRole={setRole}
+        user={user}
+        setUser={setUser}
         heatOn={heatOn}
         setHeatOn={setHeatOn}
         armingReport={armingReport}
