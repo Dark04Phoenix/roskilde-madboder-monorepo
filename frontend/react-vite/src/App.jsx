@@ -34,10 +34,11 @@ const stallIcon = new L.Icon({
 });
 const stationIcon = new L.Icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/4927/4927289.png",
-  iconSize: [28, 28],
-  iconAnchor: [14, 28],
-  popupAnchor: [0, -28],
+  iconSize: [36, 36],        // større end før
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
 });
+
 
 // ---- Hook: værdi i localStorage ----
 function usePersistedState(key, defaultValue) {
