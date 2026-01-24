@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using GroenKildeApi.Models;
 using GroenKildeApi.Models.Requests;
@@ -103,15 +104,26 @@ namespace GroenKildeApi.Controllers
 
         private static StationWithStatus MapStationWithStatus(SqlDataReader reader)
         {
+            var gps = GetNullableString(reader, "GPSPosition");
+            double lat = 0, lng = 0;
+            if (!string.IsNullOrWhiteSpace(gps))
+            {
+                var parts = gps.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 2)
+                {
+                    double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out lat);
+                    double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out lng);
+                }
+            }
+
             return new StationWithStatus
             {
                 StationId = GetValue<Guid>(reader, "StationId"),
                 Navn = GetValue<string>(reader, "Navn"),
-                GPSPosition = GetNullableString(reader, "GPSPosition"),
-                StatusId = GetNullableStruct<Guid>(reader, "StatusId"),
-                StatusType = GetNullableString(reader, "Type"),
-                StatusTidspunkt = GetNullableStruct<DateTime>(reader, "Tidspunkt"),
-                OpdateretAf = GetNullableStruct<Guid>(reader, "OpdateretAf")
+                GPSPosition = gps,
+                Latitude = lat,
+                Longitude = lng,
+                SenesteStatusId = GetNullableStruct<Guid>(reader, "SenesteStatusId")
             };
         }
 

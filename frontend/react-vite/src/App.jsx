@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useGeolocation } from "@uidotdev/usehooks";
@@ -17,9 +17,10 @@ import { loadReports, removeReportById, saveReports } from "./utils/storage";
 // Kort-område: Roskilde Festival (afgrænset for at holde UX i scope)
 const FESTIVAL_CENTER = [55.6175, 12.0789]; // midt på festivalpladsen
 const FESTIVAL_BOUNDS = [
-  [55.6085, 12.065], // sydvest
-  [55.6255, 12.095], // nordøst
+  [55.607, 12.05],
+  [55.642, 12.10],
 ];
+
 const FESTIVAL_ZOOM = 16; // tæt nok til at se pladsen fra start
 const MIN_ZOOM = 15; // undgå for langt ude overview
 const MAX_ZOOM = 18; // undgå for langt inde (unødvendige tiles)
@@ -30,6 +31,12 @@ const stallIcon = new L.Icon({
   iconUrl: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
   iconSize: [32, 32],
   iconAnchor: [16, 32],
+});
+const stationIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/4927/4927289.png",
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+  popupAnchor: [0, -28],
 });
 
 // ---- Hook: værdi i localStorage ----
@@ -73,6 +80,7 @@ function Location() {
 
 export default function App() {
   const [stalls, setStalls] = useState([]);
+  const [stations, setStations] = useState([]);
   const [role, setRole] = usePersistedState("gronkilde_role", "guest");
   const [user, setUser] = usePersistedState("gronkilde_user", null);
   const [activeStall, setActiveStall] = useState(null);
@@ -100,6 +108,20 @@ export default function App() {
         setStalls(stallsArray);
       })
       .catch((err) => console.error("Kunne ikke indlæse stalls.json:", err));
+  }, []);
+
+  // Hent stationer (read-only visning for alle roller)
+  useEffect(() => {
+    fetch("http://localhost:5013/api/Stations")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        console.log("stations from backend:", data);
+        if (Array.isArray(data)) {
+          data.forEach((s, i) => console.log("station", i, s));
+        }
+        setStations(data || []);
+      })
+      .catch((err) => console.error("Kunne ikke hente stationer:", err));
   }, []);
 
   // Stop markering hvis rollen ikke må markere
@@ -198,7 +220,11 @@ export default function App() {
         maxBounds={FESTIVAL_BOUNDS}
         maxBoundsViscosity={BOUNDS_VISCOUS}
         style={{ height: "calc(100vh - 56px)" }} // 56px ≈ højden på topbaren
-        scrollWheelZoom={true}
+        scrollWheelZoom={"center"}
+        dragging={true}
+        doubleClickZoom={true}
+        touchZoom={true}
+        boxZoom={false}
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
@@ -212,6 +238,20 @@ export default function App() {
             eventHandlers={{ click: () => setActiveStall(s) }}
           />
         ))}
+
+        {/* Stationer (alle roller, read-only) */}
+        {stations.map((s) => {
+          if (s.latitude == null || s.longitude == null) return null;
+          return (
+            <Marker
+              key={s.stationId || s.id}
+              position={[s.latitude, s.longitude]}
+              icon={stationIcon}
+            >
+              <Popup>{s.navn || "Affaldsstation"}</Popup>
+            </Marker>
+          );
+        })}
 
         {/* Rapporter som røde cirkler */}
         {reports.map((r) => (
