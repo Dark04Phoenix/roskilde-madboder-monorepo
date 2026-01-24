@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -125,6 +125,34 @@ export default function App() {
       .catch((err) => console.error("Kunne ikke hente stationer:", err));
   }, []);
 
+  // Volunteer: opdater station status via backend
+  const updateStationStatus = useCallback(
+    async (stationId) => {
+      if (role !== "volunteer" || !user) return;
+      const statusType = window.prompt("Ny status for stationen (fx 'Fyldt', 'Mangler sække'):");
+      if (!statusType || !statusType.trim()) return;
+      try {
+        const res = await fetch(`http://localhost:5013/api/Stations/${stationId}/status`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.userId, statusType }),
+        });
+        if (res.ok) {
+          // Hent stationer igen for at afspejle seneste status
+          fetch("http://localhost:5013/api/Stations")
+            .then((r) => (r.ok ? r.json() : []))
+            .then((data) => setStations(data || []))
+            .catch((err) => console.error("Kunne ikke hente stationer:", err));
+        } else {
+          console.warn("Station status PUT fejlede", await res.text());
+        }
+      } catch (e) {
+        console.error("Fejl ved opdater station status", e);
+      }
+    },
+    [role, user]
+  );
+
   // Stop markering hvis rollen ikke må markere
   useEffect(() => {
     if (!canMark && armingReport) {
@@ -248,6 +276,13 @@ export default function App() {
               key={s.stationId || s.id}
               position={[s.latitude, s.longitude]}
               icon={stationIcon}
+              eventHandlers={
+                role === "volunteer"
+                  ? {
+                      click: () => updateStationStatus(s.stationId || s.id),
+                    }
+                  : undefined
+              }
             >
               <Popup>{s.navn || "Affaldsstation"}</Popup>
             </Marker>
