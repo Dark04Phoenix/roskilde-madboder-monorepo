@@ -17,8 +17,8 @@ import { loadReports, removeReportById, saveReports } from "./utils/storage";
 // Kort-område: Roskilde Festival (afgrænset for at holde UX i scope)
 const FESTIVAL_CENTER = [55.6175, 12.0789]; // midt på festivalpladsen
 const FESTIVAL_BOUNDS = [
-  [55.607, 12.05],
-  [55.642, 12.10],
+  [55.605, 12.05],
+  [55.630, 12.10],
 ];
 
 const FESTIVAL_ZOOM = 16; // tæt nok til at se pladsen fra start
@@ -34,9 +34,9 @@ const stallIcon = new L.Icon({
 });
 const stationIcon = new L.Icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/4927/4927289.png",
-  iconSize: [36, 36],        // større end før
-  iconAnchor: [18, 36],
-  popupAnchor: [0, -36],
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+  popupAnchor: [0, -28],
 });
 
 

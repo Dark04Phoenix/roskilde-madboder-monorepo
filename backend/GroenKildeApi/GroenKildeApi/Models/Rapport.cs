@@ -10,13 +10,13 @@ namespace GroenKildeApi.Models
         [Key]
         public Guid RapportId { get; set; }
 
-        public Guid? StationId { get; set; }
+        public Guid? StationId { get; set; } 
 
         [Required]
-        public Guid RapporteretAf { get; set; }
+        public Guid RapporteretAf { get; set; } 
 
         [MaxLength(500)]
-        public string? Beskrivelse { get; set; }
+        public string? Beskrivelse { get; set; } 
 
         [Required]
         [MaxLength(50)]
@@ -26,6 +26,6 @@ namespace GroenKildeApi.Models
         public DateTime Tidspunkt { get; set; }
 
         [Required]
-        public bool Haandteret { get; set; }
+        public bool Haandteret { get; set; } 
     }
 }
